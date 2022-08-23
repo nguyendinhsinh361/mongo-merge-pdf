@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable prettier/prettier */
-import { Injectable } from "@nestjs/common";
+import { Injectable, StreamableFile } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import mongoose from "mongoose";
 import { MergePdfDto } from "./dto/merge-pdf.dto";
@@ -8,6 +8,8 @@ import { IDataDoc } from "./interface/merge-pdf.interface";
 import { DATA_MODEL } from "./schema/merge-pdf.schema";
 import * as fs from 'fs';
 import * as PDFDocument from 'pdfkit';
+import { createReadStream } from "fs";
+import path, { join } from "path";
 
 @Injectable()
 export class MergePdfService { 
@@ -67,7 +69,8 @@ export class MergePdfService {
     
         return {
             message: "Merge successfully",
-            pdfArr
+            data: `./pdf/${data._id}.pdf`
         }
     }
+
 }

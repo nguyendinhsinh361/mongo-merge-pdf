@@ -3,19 +3,25 @@
 import {
   Body,
   Controller,
+  Get,
+  Header,
+  HttpCode,
+  HttpStatus,
+  Param,
   Post,
-  UploadedFile,
+  Res,
+  StreamableFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
 import { MergePdfDto } from './dto/merge-pdf.dto';
 import { MergePdfService } from './merge-pdf.service';
-import * as mergePDFs from 'merge-multiple-pdfs';
-
+import { Response, urlencoded } from 'express';
+import { createReadStream } from 'fs';
 @ApiTags('Merge-Pdf')
 @Controller('merge-pdf')
 export class MergePdfController {
@@ -44,4 +50,20 @@ export class MergePdfController {
   ): Promise<any> {
     return this.mergePdfService.mergePdf(files, mergePdfDto)
   }
+
+  @Get('/dowload/:url')
+  @HttpCode(HttpStatus.OK)
+  @Header('Content-type', 'application/pdf')
+  async dowload(
+    @Res({ passthrough: true }) res: Response,
+    @Param('url') url: string,
+  ) {
+    const file = createReadStream(join(process.cwd(), url));
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename=${url.split('/')[url.split('/').length -1]}`,
+    });
+    return new StreamableFile(file);
+  }
+
 }

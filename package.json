@@ -33,6 +33,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
     "easy-pdf-merge": "^0.2.6",
+    "express": "^4.18.1",
     "merge-multiple-pdfs": "^1.0.3",
     "mongoose": "^6.5.1",
     "mongoose-paginate-v2": "^1.7.0",
