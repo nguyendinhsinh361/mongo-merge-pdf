@@ -1,5 +1,4 @@
 /* eslint-disable prettier/prettier */
-
 import {
   Body,
   Controller,
@@ -18,17 +17,20 @@ import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
-import { MergePdfDto } from './dto/merge-pdf.dto';
+import { UploadFileDto } from './dto/uploadFile.dto';
 import { MergePdfService } from './merge-pdf.service';
 import { Response, urlencoded } from 'express';
 import { createReadStream } from 'fs';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import fetch from 'node-fetch';
+import { MergePdfDto } from './dto/merge-pdf.dto';
 @ApiTags('Merge-Pdf')
 @Controller('merge-pdf')
 export class MergePdfController {
   constructor(private readonly mergePdfService: MergePdfService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Merge PDF' })
+  @Post('/upload-files')
+  @ApiOperation({ summary: 'Upload File' })
   @UseInterceptors(
     AnyFilesInterceptor({
       storage: diskStorage({
@@ -44,11 +46,19 @@ export class MergePdfController {
     }),
   )
   @ApiConsumes('multipart/form-data')
-  async mergePdf(
+  async uploadAndConvertFilesToPdf(
     @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() uploadFileDto: UploadFileDto,
+  ): Promise<any> {
+    return this.mergePdfService.uploadAndConvertFilesToPdf(files, uploadFileDto)
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Merge PDF' })
+  async mergePdf(
     @Body() mergePdfDto: MergePdfDto,
   ): Promise<any> {
-    return this.mergePdfService.mergePdf(files, mergePdfDto)
+    return this.mergePdfService.mergePdf(mergePdfDto)
   }
 
   @Get('/dowload/:url')
@@ -58,11 +68,13 @@ export class MergePdfController {
     @Res({ passthrough: true }) res: Response,
     @Param('url') url: string,
   ) {
-    const file = createReadStream(join(process.cwd(), url));
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename=${url.split('/')[url.split('/').length -1]}`,
     });
+
+    const file = createReadStream(join(process.cwd(), url));
+    
     return new StreamableFile(file);
   }
 
