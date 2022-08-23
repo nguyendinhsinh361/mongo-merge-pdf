@@ -4,6 +4,6 @@ import { IsOptional } from "class-validator";
 
 export class MergePdfDto {
   @IsOptional()
-  @ApiProperty()
+  @ApiProperty({ type: [String], format: 'binary', required: false })
   payload: string[];
 }
