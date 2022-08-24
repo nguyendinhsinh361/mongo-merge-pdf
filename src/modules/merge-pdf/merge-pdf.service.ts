@@ -59,7 +59,7 @@ export class MergePdfService {
                 .fill(null)
                 .map(() => Math.round(Math.random() * 16).toString(16))
                 .join('');
-        const resultUrl =  `./pdf/${randomName}.pdf`;
+        const resultUrl =  `./src/pdf/${randomName}.pdf`;
         
         return new Promise((resolve, reject) => {
             setTimeout(async() => {
