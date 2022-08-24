@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable prettier/prettier */
-import { Injectable } from "@nestjs/common";
+import { ConsoleLogger, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import mongoose from "mongoose";
-import { UploadFileDto } from "./dto/uploadFile.dto";
 import { IDataDoc } from "./interface/merge-pdf.interface";
 import { DATA_MODEL } from "./schema/merge-pdf.schema";
 import * as fs from 'fs';
@@ -16,8 +15,8 @@ export class MergePdfService {
         @InjectModel(DATA_MODEL)
         private readonly dataModel: mongoose.PaginateModel<IDataDoc>
     ) {}
-    async uploadAndConvertFilesToPdf(files: Array<Express.Multer.File>, uploadFileDto: UploadFileDto): Promise<any> {
-        const { payload } = uploadFileDto;
+    async uploadAndConvertFilesToPdf(files: Array<Express.Multer.File>, mergePdfDto: MergePdfDto): Promise<any> {
+        const { payload } = mergePdfDto;
         const data = await this.dataModel.create({ payload: null })
         const dataT = [];
         const pdfArr = [];
@@ -50,33 +49,31 @@ export class MergePdfService {
             }
             
         }
-        await pdfArr;
-        return JSON.stringify(pdfArr);
+        return pdfArr;
     }
 
-    async mergePdf(mergePdfDto: MergePdfDto) {
-        const { files } = mergePdfDto
-        const PDFMerger = require('pdf-merger-js');
-        let resultUrl = '1';
-        const merger = new PDFMerger();
-        await (async () => {
-            for(const res of files) {
-                await merger.add(res);
-            }
-            const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 16).toString(16))
-            .join('');
-            resultUrl =  `./pdf/${randomName}.pdf`;
-            await merger.save(`./pdf/${randomName}.pdf`);
-            return resultUrl;
-        })().then(res => {
-            resultUrl = res
-        })
-        return {
-            message: "Merge Successfully",
-            data: resultUrl
-        }
+    async mergePdf(files: Array<Express.Multer.File>, mergePdfDto: MergePdfDto) {
+        
+        const pdfArr  = await this.uploadAndConvertFilesToPdf(files, mergePdfDto);
+        const randomName = Array(32)
+                .fill(null)
+                .map(() => Math.round(Math.random() * 16).toString(16))
+                .join('');
+        const resultUrl =  `./pdf/${randomName}.pdf`;
+        
+        return new Promise((resolve, reject) => {
+            setTimeout(async() => {
+                const PDFMerger = require('pdf-merger-js');
+                const merger = new PDFMerger();
+                await (async () => {
+                    for(const res of pdfArr) {
+                        await merger.add(res);
+                    }
+                    await merger.save(resultUrl);
+                })()
+                resolve(resultUrl);
+            }, 1000)
+          });
     }
 
 }
