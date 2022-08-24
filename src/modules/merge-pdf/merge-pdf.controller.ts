@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable prettier/prettier */
 import {
   Body,
@@ -16,13 +17,13 @@ import {
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import path, { extname, join } from 'path';
 import { MergePdfService } from './merge-pdf.service';
 import { Response, urlencoded } from 'express';
 import { createReadStream } from 'fs';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import fetch from 'node-fetch';
 import { MergePdfDto } from './dto/merge-pdf.dto';
+import * as fs from 'fs';
+
 @ApiTags('Merge-Pdf')
 @Controller('merge-pdf')
 export class MergePdfController {
@@ -52,15 +53,32 @@ export class MergePdfController {
     @Body() mergePdfDto: MergePdfDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<any> {
+    const dataPdf = `./data-pdf`;
+
+    try {
+        if (!fs.existsSync(dataPdf)){
+            fs.mkdirSync(dataPdf)
+        }
+    } catch (err) {
+        console.log("Folder existed")
+    }
     const url = await this.mergePdfService.mergePdf(files, mergePdfDto)
     const urlT = url.toString();
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename=${urlT.split('/')[urlT.split('/').length -1]}`,
     });
-
     const file = createReadStream(join(process.cwd(), urlT));
-    
+    const directory = '././uploads/src';
+
+    fs.readdir(directory, (err, files) => {
+      if (err) throw err;
+      for (const file of files) {
+        fs.unlink(`./uploads/src/${file}`, err => {
+          if (err) throw err;
+        });
+      }
+    });
     return new StreamableFile(file);
   }
 }
