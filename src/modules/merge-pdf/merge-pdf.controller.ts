@@ -53,15 +53,18 @@ export class MergePdfController {
     @Body() mergePdfDto: MergePdfDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<any> {
-    const dataPdf = `./data-pdf`;
-
-    try {
-        if (!fs.existsSync(dataPdf)){
-            fs.mkdirSync(dataPdf)
-        }
-    } catch (err) {
-        console.log("Folder existed")
-    }
+    const rimraf = require("rimraf");
+    rimraf("./data-pdf", function () { 
+      const dataPdf = `./data-pdf`;
+      try {
+          if (!fs.existsSync(dataPdf)){
+              fs.mkdirSync(dataPdf)
+          }
+      } catch (err) {
+          console.log("Folder existed")
+      }
+    });
+    
     const url = await this.mergePdfService.mergePdf(files, mergePdfDto)
     const urlT = url.toString();
     res.set({

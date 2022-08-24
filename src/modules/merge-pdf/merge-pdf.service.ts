@@ -38,7 +38,7 @@ export class MergePdfService {
                 const doc = new PDFDocument();
                 doc.pipe(fs.createWriteStream(`${res.split('.')[0]}.pdf`));
                 await doc.image(res, {
-                    fit: [250, 300],
+                    fit: [500, 600],
                     align: 'center',
                     valign: 'center'
                   })
